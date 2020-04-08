@@ -22,14 +22,48 @@
 
 #import <UIKit/UIKit.h>
 #import "VKSdk.h"
+extern NSString *VK_AUTHORIZE_URL_STRING;
+
+typedef NS_ENUM(NSInteger, VKAuthorizationType) {
+    VKAuthorizationTypeWebView,
+    VKAuthorizationTypeSafari,
+    VKAuthorizationTypeApp
+};
+
+@interface VKNavigationController : UINavigationController
+
+@end
+
+@interface VKAuthorizationContext : VKObject
+@property (nonatomic, readonly, strong) NSString *clientId;
+@property (nonatomic, readonly, strong) NSString *displayType;
+@property (nonatomic, readonly, strong) NSArray<NSString*> *scope;
+@property (nonatomic, readonly) BOOL revoke;
+
+/**
+ Prepare context for building oauth url
+ @param authType type of authorization will be used
+ @param clientId id of the application
+ @param displayType selected display type
+ @param scope requested scope for application
+ @param revoke If YES, user will see permissions list and allow to logout (if logged in already)
+ @return Prepared context, which must be passed into buildAuthorizationURLWithContext: method
+ */
++(instancetype) contextWithAuthType:(VKAuthorizationType) authType
+                           clientId:(NSString*)clientId
+                        displayType:(NSString*)displayType
+                              scope:(NSArray<NSString*>*)scope
+                             revoke:(BOOL) revoke;
+
+@end
 
 /**
 Controller for authorization through webview (if VK app not available)
 */
-@interface VKAuthorizeController : UIViewController <UIWebViewDelegate>
+@interface VKAuthorizeController : UIViewController
 
 /**
-Causes UIWebView in standard UINavigationController be presented in SDK delegate
+Causes web view in standard UINavigationController be presented in SDK delegate
 @param appId Identifier of VK application
 @param permissions Permissions that user specified for application
 @param revoke If YES, user will see permissions list and allow to logout (if logged in already)
@@ -41,23 +75,11 @@ Causes UIWebView in standard UINavigationController be presented in SDK delegate
                          displayType:(VKDisplayType)displayType;
 
 /**
-Causes UIWebView in standard UINavigationController be presented for user validation
+Causes web view in standard UINavigationController be presented for user validation
 @param validationError validation error returned by API
 */
 + (void)presentForValidation:(VKError *)validationError;
 
-/**
-Builds url for oauth authorization
-@param redirectUri uri for redirect
-@param clientId id of your application
-@param scope requested scope for application
-@param revoke If YES, user will see permissions list and allow to logout (if logged in already)
-@param display select display type
-@return Complete url-string for grant authorization
-*/
-+ (NSString *)buildAuthorizationUrl:(NSString *)redirectUri
-                           clientId:(NSString *)clientId
-                              scope:(NSString *)scope
-                             revoke:(BOOL)revoke
-                            display:(VKDisplayType)display;
++ (NSURL *)buildAuthorizationURLWithContext:(VKAuthorizationContext*) ctx;
+
 @end
